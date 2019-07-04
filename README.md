@@ -5,6 +5,13 @@ libciabatta is the sandwich mixin support library. It's really small (51 lines o
 
 Header-only.
 
+
+License
+-------
+
+Apache 2. Also see [LICENSE](LICENSE).
+
+
 Example:
 --------
 

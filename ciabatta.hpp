@@ -1,9 +1,26 @@
-#ifndef INLCUDED_CIABATTA_HPP
-#define INLCUDED_CIABATTA_HPP
+#ifndef INCLUDED_CIABATTA_HPP
+#define INCLUDED_CIABATTA_HPP
+/*
+ * Copyright 2019 Gašper Ažman
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-#include <utility>
-
-#define CIABATTA_FWD(name) std::forward<decltype(name)>(name)
+/**
+ * @file ciabatta.hpp
+ *
+ * The minimal mixin support library. See the README.md for a tutorial.
+ */
 
 namespace ciabatta {
 
@@ -17,6 +34,7 @@ struct top { /* not a mixin */
 };
 
 namespace detail {
+
 template <typename Concrete, template <class> class H, template <class> class... Tail>
 struct chain_inherit {
     using result = typename chain_inherit<Concrete, Tail...>::type;
@@ -35,8 +53,10 @@ using mixin_impl = typename chain_inherit<top<Concrete>, Mixins...>::type;
 
 template <typename Concrete, template <class> class... Mixins>
 struct mixin : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
-    mixin(auto&&... rest) 
-        : ::ciabatta::detail::mixin_impl<Concrete, Mixins...>(CIABATTA_FWD(rest)...) {}
+    template <typename... Rest>
+    mixin(Rest&&... rest) 
+        : ::ciabatta::detail::mixin_impl<Concrete, Mixins...>(static_cast<decltype(rest)>(rest)...) {}
+
     mixin() = default;
     mixin(mixin const&) = default;
     mixin(mixin&&) = default;
@@ -47,5 +67,4 @@ struct mixin : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
 
 } // namespace ciabatta
 
-#undef CIABATTA_FWD
 #endif
