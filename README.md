@@ -1,7 +1,7 @@
 libciabatta
 ===========
 
-libciabatta is the sandwich mixin support library. It's really small (51 lines of code!) and it's the most composable.
+libciabatta is the sandwich mixin support library. It's really small and most composable.
 
 Header-only.
 
