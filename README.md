@@ -21,7 +21,7 @@ Example:
 
 Simple include:
 ```cpp
-#include "ciabatta.hpp"
+#include "ciabatta/ciabatta.hpp"
 ```
 
 Include the stuff the mixins will need:
@@ -47,8 +47,6 @@ struct my_mixin : Base {
 
 A few mixins:
 ```cpp
-
-using namespace ciabatta;
 template <typename Base>
 struct stdout_logger : Base {
     template <typename... Ts>
@@ -91,13 +89,13 @@ And this is how you use the library:
 Making an easy concrete class that doesn't need to initialize things:
 
 ```cpp
-struct concrete : mixin<concrete, stdout_logger, frobnicator> {
+struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
 };
 ```
 
 Or maybe something more complicated that does initialize things:
 ```cpp
-struct concrete2 : mixin<concrete2, ostream_logger, frobnicator, echoer> {
+struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
     concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
 };
 ```
