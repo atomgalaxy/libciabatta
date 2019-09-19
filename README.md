@@ -5,11 +5,15 @@ libciabatta is the sandwich mixin support library. It's really small and most co
 
 Header-only.
 
-
 License
 -------
 
 Apache 2. Also see [LICENSE](LICENSE).
+
+
+Table of Contents
+-----------------
+[toc]
 
 
 Example:
@@ -108,3 +112,24 @@ int main() {
     c2.frobnicate();
 }
 ```
+
+Using With `bazel`
+------------------
+
+Put this into your `WORKSPACE`:
+```py
+load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+git_repository(
+    name = "ciabatta",
+    remote = "git@github.com:atomgalaxy/libciabatta.git",
+    tag = "release", # or version-N, look at the repo for tags
+)
+```
+
+The tags will be updated when/if the repo changes.
+
+
+Using With `cmake`
+------------------
+
+TBD
