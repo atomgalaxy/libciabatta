@@ -1,20 +1,47 @@
 libciabatta
 ===========
 
-libciabatta is the sandwich mixin support library. It's really small and most composable.
+Ciabatta is the sandwich mixin support library. It's really small and most
+composable.
+
+Initially written by Gašper Ažman for a talk at C++London.
 
 Header-only.
 
 License
 -------
 
-Apache 2. Also see [LICENSE](LICENSE).
+This material is offered free of charge under the Apache 2 license. See
+[LICENSE](LICENSE) for details. Apache 2 is a permissive, GPL-compatible,
+non-copyleft license.
 
 
-Table of Contents
+Table of Contents <!-- omit in toc -->
 -----------------
-[toc]
+- [libciabatta](#libciabatta)
+  - [License](#license)
+  - [Introduction](#introduction)
+  - [Example:](#example)
+  - [Using With `bazel`](#using-with-bazel)
+  - [Using With `cmake`](#using-with-cmake)
 
+
+Introduction
+------------
+
+We all know the guideline: don't write large classes. But sometimes you need
+to. Or sometimes, inheritance is the only form of composition that will do,
+because you need interface composition.
+
+This is where *ciabatta* comes in.
+
+Composed classes are like a sandwitch. The final composed class is the bottom
+slice. The sandwich rests on it. All the toppings are the mixins. And
+finally, there is the top slice, which finishes up a sandwich, and makes it a
+sandwich - the CRTP provider.
+
+Ciabatta provides this top slice, plus the tools to compose mixins without
+much boilerplate.
 
 Example:
 --------
@@ -29,65 +56,75 @@ Include the stuff the mixins will need:
 #include <iostream>
 #include <utility>
 #include <string>
+```
 
+Make the example easy: (don't do this in headers)
+```cpp
 #define FWD(name) std::forward<decltype(name)>(name)
 ```
 
-Make the example easy: (don't do this at home)
 
 A mixin is a class template that derives from its ownly template parameter:
 ```cpp
 template <typename Base>
-struct my_mixin : Base {
-    // forwarding constructor - add your params at the front
-    my_mixin(auto&&... rest) : Base(FWD(rest)...) {}
-    /* your code here */
+struct minimal_mixin : Base {
+    // A mixin must forward the constructor parameters it does not consume
+    // add the parameters to your mixin at the front, before `rest`
+    minimal_mixin(auto&&... rest) : Base(FWD(rest)...) {}
+    // the rest of the implementation here
 };
 ```
 
-A few mixins:
+Not a whole lot of boilerplate, right?
+
+A mixin is fundamentally a class fragment - it's useless if it can't refer to
+other parts of the class. The top slice provides this capability through
+providing the four overloads of `self()`:
+
+```cpp
+template <typename Base>
+struct frobnicator : Base {
+    frobnicator(auto&&... rest) : Base(FWD(rest)...) {}
+
+    void frobnicate() {
+        // self() is provided by Base, so we need to mark it dependent.
+        // this->self() is short and obvious.
+        this->self().log("frobnicate.");
+    }
+};
+```
+
+Of course, `log()` needs to be provided by the concrete class somehow,
+perhaps through a separate mixin:
+
 ```cpp
 template <typename Base>
 struct stdout_logger : Base {
-    template <typename... Ts>
-    void log(Ts&&... xs) const { (std::cout << ... << xs); }
+    void log(auto&&... xs) const { (std::cout << ... << xs); }
 };
+```
 
+However, if we wanted to log through `std::ostream`, we would need some
+state, which needs to be initialized. We do this by peeling off parameters
+from the constructor call, and forwarding the rest:
 
+```cpp
 template <typename Base>
 struct ostream_logger : Base {
     ostream_logger(std::ostream& out_, auto&&... rest)
         : Base(FWD(rest)...)
         , _out(&out_) {}
 
-    template <typename... Ts>
-    void log(Ts&&... xs) const { ((*_out) << ... << xs); }
-  private:
+    void log(auto&&... xs) const { ((*_out) << ... << xs); }
+  private: // note the private - we don't want another mixin touching this!
     std::ostream* _out;
-};
-
-template <typename Base>
-struct echoer : Base {
-    echoer(std::string prefix_, auto&&... rest) 
-        : Base(FWD(rest)...)
-        ,_prefix(std::move(prefix_)) { }
-    std::string echo(std::string arg) { return _prefix + arg; }
-    private:
-    std::string _prefix;
-};
-
-template <typename Base>
-struct frobnicator : Base {
-    frobnicator(auto&&... rest) : Base(FWD(rest)...) {}
-
-    void frobnicate() const { this->self().log("frobnicate."); }
 };
 ```
 
-And this is how you use the library:
+We can now compose several different concrete classes based on this library
+of mixins.
 
 Making an easy concrete class that doesn't need to initialize things:
-
 ```cpp
 struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
 };
@@ -100,7 +137,7 @@ struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoe
 };
 ```
 
-And this is the test driver.
+For completeness, the test driver:
 ```cpp
 int main() {
     concrete c;
@@ -121,6 +158,17 @@ git_repository(
     name = "ciabatta",
     remote = "git@github.com:atomgalaxy/libciabatta.git",
     tag = "release", # or version-N, look at the repo for tags
+)
+```
+
+For using with a target:
+```py
+cc_binary(
+    name = "my_program",
+    srcs = ["my_program.cpp"],
+    deps = [
+        "@ciabatta//",  # for "@ciabatta//:ciabatta"
+    ]
 )
 ```
 

@@ -25,7 +25,7 @@
 namespace ciabatta {
 
 template <typename MostDerived>
-struct top { /* not a mixin */
+struct ciabatta_top { /* not a mixin */
   using self_type = MostDerived;
   decltype(auto) self() & { return static_cast<self_type&>(*this); }
   decltype(auto) self() && { return static_cast<self_type&&>(*this); }
@@ -53,7 +53,7 @@ struct chain_inherit<Concrete, H> {
 };
 
 template <typename Concrete, template <class> class... Mixins>
-using mixin_impl = typename chain_inherit<top<Concrete>, Mixins...>::type;
+using mixin_impl = typename chain_inherit<ciabatta_top<Concrete>, Mixins...>::type;
 
 }  // namespace detail
 

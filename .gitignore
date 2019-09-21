@@ -1,2 +1,4 @@
 bazel-*
 build-cmake
+build
+.vscode

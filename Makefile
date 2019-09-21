@@ -12,7 +12,7 @@ test: test_cmake
 test_cmake: cmake-build
 	cd build && cmake ../ -GNinja
 	cd build && ninja
-	cd build && ninja test
+	cd build/test && ctest .
 
 
 .PHONY: test_bazel
