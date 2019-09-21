@@ -6,31 +6,54 @@ endif()
 
 project(
   ciabatta
+  LANGUAGES CXX
   VERSION 1.0.0
   DESCRIPTION
     "The Sandwich Mixin Pattern Support Library. Header-only, and really small, most composable."
   HOMEPAGE_URL "https://github.com/atomgalaxy/libciabatta")
 
+if(CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR)
+  message(
+    FATAL_ERROR
+      "Building in-source is not supported! Create a build dir and remove ${CMAKE_SOURCE_DIR}/CMakeCache.txt"
+    )
+endif()
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CMake")
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
+include(CTest)
+include(CPack)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 add_library(ciabatta INTERFACE)
-set_target_properties(ciabatta PROPERTIES INTERFACE_COMPILE_FEATURES cxx_std_14)
-target_include_directories(ciabatta INTERFACE include/)
+target_compile_features(ciabatta INTERFACE cxx_std_14)
+target_include_directories(
+  ciabatta
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+
+add_library(ciabatta::ciabatta ALIAS ciabatta)
 
 add_subdirectory("test")
 
+# deployment/installation
 if(NOT_SUBPROJECT)
   set(CIABATTA_CMAKE_CONFIG_DESTINATION
-      "${CMAKE_INSTALL_LIBDIR}/cmake/ciabatta")
+      "${CMAKE_INSTALL_LIBDIR}/cmake/ciabatta/")
+
   configure_package_config_file(
     ${CMAKE_CURRENT_LIST_DIR}/CMake/ciabatta-config.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/ciabatta-config.cmake
     INSTALL_DESTINATION
     ${CIABATTA_CMAKE_CONFIG_DESTINATION})
 
-  # create and install an export set for catch target as ciabatta::Catch
-  install(TARGETS ciabatta EXPORT ciabattaTargets DESTINATION
-                                                  ${CMAKE_INSTALL_LIBDIR})
+  # create and install an export set for catch target as ciabatta
+  install(TARGETS ciabatta EXPORT ciabatta-targets DESTINATION
+                                                   ${CMAKE_INSTALL_LIBDIR})
 
-  install(EXPORT ciabattaTargets
+  install(EXPORT ciabatta-targets
           NAMESPACE ciabatta::
           DESTINATION ${CIABATTA_CMAKE_CONFIG_DESTINATION})
 
@@ -47,7 +70,7 @@ if(NOT_SUBPROJECT)
   set(CIABATTA_CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})
   set(CMAKE_SIZEOF_VOID_P "")
   write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/ciabatta-configVersion.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/ciabatta-config-version.cmake"
     COMPATIBILITY SameMajorVersion)
   set(CMAKE_SIZEOF_VOID_P ${CIABATTA_CMAKE_SIZEOF_VOID_P})
 
@@ -68,6 +91,4 @@ if(NOT_SUBPROJECT)
 
   set(CPACK_PACKAGE_CONTACT "https://github.com/atomgalaxy/libciabatta")
 
-  include(CPack)
-
-endif(NOT_SUBPROJECt)
+endif(NOT_SUBPROJECT)

@@ -1,0 +1,7 @@
+includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
+
+Name: ciabatta
+Description: The sandwich-mixin header-only support library.
+URL: https://github.com/atomicity/libciabatta/
+Version: @ciabatta_VERSION@
+Cflags: -I${includedir}

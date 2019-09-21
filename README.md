@@ -24,6 +24,8 @@ Table of Contents <!-- omit in toc -->
   - [Example:](#example)
   - [Using With `bazel`](#using-with-bazel)
   - [Using With `cmake`](#using-with-cmake)
+  - [Testing this package](#testing-this-package)
+    - [Testing the build/installation](#testing-the-buildinstallation)
 
 
 Introduction
@@ -178,4 +180,24 @@ The tags will be updated when/if the repo changes.
 Using With `cmake`
 ------------------
 
-TBD
+Look at the example in [CMakeLists.txt](tests/CMakeLists.txt). This is the obvious way:
+
+```cmake
+find_package(ciabatta REQUIRED)
+
+add_executable(test_example example.cpp)
+target_link_libraries(test_example PUBLIC ciabatta::ciabatta)
+```
+
+Testing this package
+--------------------
+
+You can run the tests with either `bazel test //...` or build this package
+with cmake and use `ctest` in the built test directory.
+
+
+### Testing the build/installation
+
+the [Makefile](Makefile) at the root of the project automates this process.
+It checks that once installed, the package exports the required include paths
+etc. by builing the tests with a "foreign" (installed) *libciabatta*.
