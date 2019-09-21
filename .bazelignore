@@ -1,0 +1,7 @@
+cmake-scratch
+cmake-install
+cmake-build
+build
+cmake-build-debug
+cmake-build-release
+

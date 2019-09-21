@@ -7,6 +7,11 @@ cc_test(
 cc_test(
     name = "example",
     srcs = ["example.cpp"],
-    copts = ["-fconcepts"],
+    deps = ["//:ciabatta"],
+)
+
+cc_test(
+    name = "test_provides",
+    srcs = ["test_provides.cpp"],
     deps = ["//:ciabatta"],
 )

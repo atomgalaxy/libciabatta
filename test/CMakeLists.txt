@@ -29,8 +29,11 @@ add_executable(test_example example.cpp)
 target_link_libraries(test_example PUBLIC ciabatta::ciabatta)
 target_compile_features(test_example PUBLIC cxx_std_20)
 
-add_executable(test_chained_init example.cpp)
+add_executable(test_chained_init test_chained_init.cpp)
 target_link_libraries(test_chained_init PUBLIC ciabatta::ciabatta)
+
+add_executable(test_provides test_provides.cpp)
+target_link_libraries(test_provides PUBLIC ciabatta::ciabatta)
 
 add_test(NAME test_example COMMAND test_example)
 add_test(NAME test_chained_init COMMAND test_chained_init)

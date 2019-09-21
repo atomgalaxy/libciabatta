@@ -21,9 +21,18 @@ Table of Contents <!-- omit in toc -->
 - [libciabatta](#libciabatta)
   - [License](#license)
   - [Introduction](#introduction)
-  - [Example:](#example)
   - [Using With `bazel`](#using-with-bazel)
   - [Using With `cmake`](#using-with-cmake)
+  - [Tutorial:](#tutorial)
+    - [Includes](#includes)
+    - [Mixin Interface Definition](#mixin-interface-definition)
+    - [Our First Simple Mixin](#our-first-simple-mixin)
+    - [Mixins with Data](#mixins-with-data)
+    - [Putting Mixins Together](#putting-mixins-together)
+  - [Advanced Techniques](#advanced-techniques)
+    - [Providing an Abstract Interface](#providing-an-abstract-interface)
+      - [Example:](#example)
+    - [Templated Mixins](#templated-mixins)
   - [Testing this package](#testing-this-package)
     - [Testing the build/installation](#testing-the-buildinstallation)
 
@@ -45,110 +54,6 @@ sandwich - the CRTP provider.
 Ciabatta provides this top slice, plus the tools to compose mixins without
 much boilerplate.
 
-Example:
---------
-
-Simple include:
-```cpp
-#include "ciabatta/ciabatta.hpp"
-```
-
-Include the stuff the mixins will need:
-```cpp
-#include <iostream>
-#include <utility>
-#include <string>
-```
-
-Make the example easy: (don't do this in headers)
-```cpp
-#define FWD(name) std::forward<decltype(name)>(name)
-```
-
-
-A mixin is a class template that derives from its only template parameter:
-```cpp
-template <typename Base>
-struct minimal_mixin : Base {
-    // A mixin must forward the constructor parameters it does not consume
-    // add the parameters to your mixin at the front, before `rest`
-    minimal_mixin(auto&&... rest) : Base(FWD(rest)...) {}
-    // the rest of the implementation here
-};
-```
-
-Not a whole lot of boilerplate, right?
-
-A mixin is fundamentally a class fragment - it's useless if it can't refer to
-other parts of the class. The top slice provides this capability through
-providing the four overloads of `self()`:
-
-```cpp
-template <typename Base>
-struct frobnicator : Base {
-    frobnicator(auto&&... rest) : Base(FWD(rest)...) {}
-
-    void frobnicate() {
-        // self() is provided by Base, so we need to mark it dependent.
-        // this->self() is short and obvious.
-        this->self().log("frobnicate.");
-    }
-};
-```
-
-Of course, `log()` needs to be provided by the concrete class somehow,
-perhaps through a separate mixin:
-
-```cpp
-template <typename Base>
-struct stdout_logger : Base {
-    void log(auto&&... xs) const { (std::cout << ... << xs); }
-};
-```
-
-However, if we wanted to log through `std::ostream`, we would need some
-state, which needs to be initialized. We do this by peeling off parameters
-from the constructor call, and forwarding the rest:
-
-```cpp
-template <typename Base>
-struct ostream_logger : Base {
-    ostream_logger(std::ostream& out_, auto&&... rest)
-        : Base(FWD(rest)...)
-        , _out(&out_) {}
-
-    void log(auto&&... xs) { ((*_out) << ... << xs); }
-  private: // note the private - we don't want another mixin touching this!
-    std::ostream* _out;
-};
-```
-
-We can now compose several different concrete classes based on this library
-of mixins.
-
-Making an easy concrete class that doesn't need to initialize things:
-```cpp
-struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
-};
-```
-
-Or maybe something more complicated that does initialize things:
-```cpp
-struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
-    concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
-};
-```
-
-For completeness, the test driver:
-```cpp
-int main() {
-    concrete c;
-    c.frobnicate();
-
-    concrete2 c2{std::cerr};
-    c2.frobnicate();
-}
-```
 
 Using With `bazel`
 ------------------
@@ -188,6 +93,235 @@ find_package(ciabatta REQUIRED)
 add_executable(test_example example.cpp)
 target_link_libraries(test_example PUBLIC ciabatta::ciabatta)
 ```
+
+Tutorial:
+--------
+
+### Includes
+
+Simple include:
+```cpp
+#include "ciabatta/ciabatta.hpp"
+```
+
+Include the stuff the mixins will need:
+```cpp
+#include <iostream>
+#include <utility>
+#include <string>
+```
+
+Make the example easy: (don't do this in headers)
+```cpp
+#define FWD(name) std::forward<decltype(name)>(name)
+```
+
+### Mixin Interface Definition
+
+A mixin is a class template that derives from its only template parameter:
+```cpp
+template <typename Base>
+struct minimal_mixin : Base {
+    // A mixin must forward the constructor parameters it does not consume
+    // add the parameters to your mixin at the front, before `rest`
+    minimal_mixin(auto&&... rest) : Base(FWD(rest)...) {}
+    // the rest of the implementation here
+};
+```
+Not a whole lot of boilerplate, right?
+
+**Note:** Before C++20, the constructor needs to be written as
+```cpp
+template <typename...Args>
+minimal_mixin(Args&&...rest) : Base(std::forward<Args>(rest)...) {}
+```
+Because this is so common, *ciabatta* has a macro for you:
+```cpp
+CIABATTA_DEFAULT_MIXIN_CTOR(minimal_mixin, Base);
+```
+
+### Our First Simple Mixin
+
+A mixin is fundamentally a class fragment - it's useless if it can't refer to
+other parts of the class. The top slice provides this capability through
+providing the four overloads of `self()`:
+
+```cpp
+template <typename Base>
+struct frobnicator : Base {
+    frobnicator(auto&&... rest) : Base(FWD(rest)...) {}
+
+    void frobnicate() {
+        // self() is provided by Base, so we need to mark it dependent.
+        // this->self() is short and obvious.
+        this->self().log("frobnicate.");
+    }
+};
+```
+
+Of course, `log()` needs to be provided by the concrete class somehow,
+perhaps through a separate mixin:
+
+```cpp
+template <typename Base>
+struct stdout_logger : Base {
+    void log(auto&&... xs) const { (std::cout << ... << xs); }
+};
+```
+
+### Mixins with Data
+
+However, if we wanted to log through `std::ostream`, we would need some
+state, which needs to be initialized. We do this by peeling off parameters
+from the constructor call, and forwarding the rest:
+
+```cpp
+template <typename Base>
+struct ostream_logger : Base {
+    ostream_logger(std::ostream& out_, auto&&... rest)
+        : Base(FWD(rest)...)
+        , _out(&out_) {}
+
+    void log(auto&&... xs) { ((*_out) << ... << xs); }
+  private:
+    std::ostream* _out;
+};
+```
+
+**Note the private data**: *nothing* in the composed class can touch `_out`.
+This means that you get back your encapsulation, instead of having your
+entire class inline, with its 150+ members, and every function having
+promiscuous access to everything.
+
+### Putting Mixins Together
+
+We can now compose several different concrete classes based on this library
+of mixins.
+
+Making an easy concrete class that doesn't need to initialize things:
+```cpp
+struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
+};
+```
+
+Or maybe something more complicated that does initialize things:
+```cpp
+struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
+    concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
+};
+```
+
+For completeness, the test driver:
+```cpp
+int main() {
+    concrete c;
+    c.frobnicate();
+
+    concrete2 c2{std::cerr};
+    c2.frobnicate();
+}
+```
+
+Advanced Techniques
+-------------------
+
+Here are some more advanced techniques one can do with mixins:
+
+### Providing an Abstract Interface
+
+Oftentimes, composed classes need to implement some abstract interface, with
+the various mixins providing the implementation of it. But how can we expose
+the fact that we are, in fact, implementing one?
+
+We multiply-inherit from `Base` and the interface, of course :)
+
+#### Example:
+
+Our interface will be `abstract_socket`:
+```cpp
+struct message { /* payload */
+};
+struct abstract_socket {
+  virtual void receive(message) = 0;
+  virtual void send(message) = 0;
+};
+```
+
+We should probably provide some null implementations for mocking:
+
+```cpp
+template <typename Base>
+struct null_sender : Base {
+  CIABATTA_DEFAULT_MIXIN_CTOR(null_sender, Base);
+  void send(message m) final {}
+};
+```
+
+```cpp
+template <typename Base>
+struct null_receiver : Base {
+  CIABATTA_DEFAULT_MIXIN_CTOR(null_receiver, Base);
+  void receive(message m) final {}
+};
+```
+
+Let's make a mixin that adds the vtable and `abstract_socket&` conversion capability:
+```cpp
+template <typename Base>
+struct is_socket : Base, abstract_socket {
+  CIABATTA_DEFAULT_MIXIN_CTOR(is_socket, Base);
+};
+```
+
+And now we can make our concrete `null_socket` class:
+```cpp
+struct null_socket
+    : ciabatta::mixin<null_socket, null_sender, null_receiver, is_socket> {};
+```
+*Note:* `is_socket` has to be last if you want the ability to mark member
+*functions `final`.
+
+If you don't want to define a new class just to inject an abstract interface,
+*ciabatta* has your back:
+
+```cpp
+struct null_socket2
+    : ciabatta::mixin<null_socket2,
+                      null_sender,
+                      null_receiver,
+                      ciabatta::mixins::provides<abstract_socket>::mixin> {};
+```
+
+### Templated Mixins
+
+Sometimes, like in the `ciabatta::mixins::provides` mixin, we need more than
+one template parameter.
+
+This is enabled by the `curry` facility. Let's take a look at a simplistic
+`provides` mixin:
+
+```cpp
+template <typename Interface, typename Base>
+struct provides : Base {
+    CIABATTA_DEFAULT_MIXIN_CTOR(provides, Base);
+};
+```
+
+To use `provides` as-is, we can just supply the `interface` parameter to
+`curry`, like so:
+```cpp
+struct null_socket3
+    : ciabatta::mixin<
+          null_socket3,
+          null_sender,
+          null_receiver,
+          ciabatta::curry<provides, abstract_socket>::mixin> {
+};
+```
+
+In fact, this is what `ciabatta::mixins::provides` does with its `mixin`
+inner templated type alias.
+
 
 Testing this package
 --------------------

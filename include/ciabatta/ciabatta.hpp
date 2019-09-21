@@ -22,6 +22,8 @@
  * The minimal mixin support library. See the README.md for a tutorial.
  */
 
+#include <type_traits>
+
 namespace ciabatta {
 
 template <typename MostDerived>
@@ -33,6 +35,10 @@ struct ciabatta_top { /* not a mixin */
   decltype(auto) self() const&& {
     return static_cast<self_type const&&>(*this);
   }
+};
+
+struct deferred {
+  deferred() = delete;
 };
 
 namespace detail {
@@ -53,7 +59,8 @@ struct chain_inherit<Concrete, H> {
 };
 
 template <typename Concrete, template <class> class... Mixins>
-using mixin_impl = typename chain_inherit<ciabatta_top<Concrete>, Mixins...>::type;
+using mixin_impl =
+    typename chain_inherit<ciabatta_top<Concrete>, Mixins...>::type;
 
 }  // namespace detail
 
@@ -72,6 +79,55 @@ struct mixin : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
   ~mixin() = default;
 };
 
+/**
+ * Allows currying of mixin classes with multiple template parameters.
+ *
+ * For an example, see the `provides` mixin.
+ *
+ * Basic usage:
+ * ```
+ * template <typename Arg1, typename Arg2, typename Base>
+ * struct my_mixin : Base { CIABATTA_DEFAULT_MIXIN_CTOR(my_mixin, Base); };
+ * struct myclass 
+ *   : ciabatta::mixin<myclass,
+ *                     ciabatta::curry<my_mixin, int, float>::mixin
+ *                    > {};
+ * ```
+ */
+template <template <class...> class Mixin, typename... Args>
+struct curry {
+  template <typename Base>
+  using mixin = Mixin<Args..., Base>;
+};
+
 }  // namespace ciabatta
+
+/**
+ * The empty forwarding constructor is so common that automating the pattern
+ * through a macro is a good idea.
+ *
+ * The only parameter to the macro is the class name, therefore, the
+ * constructor.
+ */
+#define CIABATTA_DEFAULT_MIXIN_CTOR(CLS, BASE) \
+  template <typename... Args>                  \
+  constexpr CLS(Args&&... args)                \
+      : BASE(static_cast<decltype(args)>(args)...) {}
+
+namespace ciabatta::mixins {
+
+/**
+ *
+ *
+ */
+template <typename Interface, typename Base = ::ciabatta::deferred>
+struct provides : Base, Interface {
+  template <typename Base_>
+  using mixin = typename curry<provides, Interface>::template mixin<Base_>;
+
+  CIABATTA_DEFAULT_MIXIN_CTOR(provides, Base);
+};
+
+}  // namespace ciabatta::mixins
 
 #endif
