@@ -117,7 +117,7 @@ struct ostream_logger : Base {
         : Base(FWD(rest)...)
         , _out(&out_) {}
 
-    void log(auto&&... xs) const { ((*_out) << ... << xs); }
+    void log(auto&&... xs) { ((*_out) << ... << xs); }
   private: // note the private - we don't want another mixin touching this!
     std::ostream* _out;
 };
