@@ -66,7 +66,7 @@ Make the example easy: (don't do this in headers)
 ```
 
 
-A mixin is a class template that derives from its ownly template parameter:
+A mixin is a class template that derives from its only template parameter:
 ```cpp
 template <typename Base>
 struct minimal_mixin : Base {
