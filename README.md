@@ -85,7 +85,7 @@ The tags will be updated when/if the repo changes.
 Using With `cmake`
 ------------------
 
-Look at the example in [CMakeLists.txt](tests/CMakeLists.txt). This is the obvious way:
+Look at the example in [CMakeLists.txt](test/CMakeLists.txt). This is the obvious way:
 
 ```cmake
 find_package(ciabatta REQUIRED)
