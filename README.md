@@ -31,7 +31,6 @@ Table of Contents <!-- omit in toc -->
     - [Putting Mixins Together](#putting-mixins-together)
   - [Advanced Techniques](#advanced-techniques)
     - [Providing an Abstract Interface](#providing-an-abstract-interface)
-      - [Example:](#example)
     - [Templated Mixins](#templated-mixins)
   - [Testing this package](#testing-this-package)
     - [Testing the build/installation](#testing-the-buildinstallation)
@@ -235,7 +234,7 @@ the fact that we are, in fact, implementing one?
 
 We multiply-inherit from `Base` and the interface, of course :)
 
-#### Example:
+**Example**
 
 Our interface will be `abstract_socket`:
 ```cpp
