@@ -25,7 +25,7 @@ Table of Contents <!-- omit in toc -->
   - [Using With `cmake`](#using-with-cmake)
   - [Tutorial:](#tutorial)
     - [Includes](#includes)
-    - [Mixin Interface Definition](#mixin-interface-definition)
+    - [Ciabatta Mixin Concept Requirements](#ciabatta-mixin-concept-requirements)
     - [Our First Simple Mixin](#our-first-simple-mixin)
     - [Mixins with Data](#mixins-with-data)
     - [Putting Mixins Together](#putting-mixins-together)
@@ -50,8 +50,11 @@ slice. The sandwich rests on it. All the toppings are the mixins. And
 finally, there is the top slice, which finishes up a sandwich, and makes it a
 sandwich - the CRTP provider.
 
-Ciabatta provides this top slice, plus the tools to compose mixins without
-much boilerplate.
+Ciabatta provides:
+
+- The top slice that lets your mixins refer to each other
+- The tools to compose mixins with minimal boilerplate
+- The mixin concept: following this concept will make your mixins interoperable
 
 
 Using With `bazel`
@@ -115,9 +118,16 @@ Make the example easy: (don't do this in headers)
 #define FWD(name) std::forward<decltype(name)>(name)
 ```
 
-### Mixin Interface Definition
+### Ciabatta Mixin Concept Requirements
 
-A mixin is a class template that derives from its only template parameter:
+Ciabatta doesn't place much restriction on mixins. You can do whatever you
+like, pretty much, as long as you conform to the two rules:
+
+1. A **ciabatta-compatible mixin** is a class template that inherits
+    publically from its _only_ template parameter. (It is allowed to *also*
+    inherit from other things.)
+2. It must forward all constructor arguments that it doesn't use to its base.
+
 ```cpp
 template <typename Base>
 struct minimal_mixin : Base {
@@ -127,7 +137,8 @@ struct minimal_mixin : Base {
     // the rest of the implementation here
 };
 ```
-Not a whole lot of boilerplate, right?
+
+That's it!
 
 **Note:** Before C++20, the constructor needs to be written as
 ```cpp
