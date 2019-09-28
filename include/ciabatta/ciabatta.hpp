@@ -88,7 +88,7 @@ struct mixin : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
  * ```
  * template <typename Arg1, typename Arg2, typename Base>
  * struct my_mixin : Base { CIABATTA_DEFAULT_MIXIN_CTOR(my_mixin, Base); };
- * struct myclass 
+ * struct myclass
  *   : ciabatta::mixin<myclass,
  *                     ciabatta::curry<my_mixin, int, float>::mixin
  *                    > {};
@@ -109,16 +109,25 @@ struct curry {
  * The only parameter to the macro is the class name, therefore, the
  * constructor.
  */
-#define CIABATTA_DEFAULT_MIXIN_CTOR(CLS, BASE) \
-  template <typename... Args>                  \
-  constexpr CLS(Args&&... args)                \
-      : BASE(static_cast<decltype(args)>(args)...) {}
+#define CIABATTA_DEFAULT_MIXIN_CTOR(CLS, BASE)        \
+  template <typename... Args>                         \
+  constexpr CLS(Args&&... args)                       \
+      : BASE(static_cast<decltype(args)>(args)...) {} \
+  static_assert(true, "require semicolon")
 
 namespace ciabatta::mixins {
 
 /**
+ * The "provides" mixin.
  *
- *
+ * @param Interface - the abstract base class to add to the interface. The rest
+ * are implementation details.
+ * 
+ * Example:
+ * ```cpp
+ * struct concrete : ciabatta::mixin<concrete, ciabatta::mixins::provides<MyAbc>::mixin> {
+ * };
+ * ```
  */
 template <typename Interface, typename Base = ::ciabatta::deferred>
 struct provides : Base, Interface {
