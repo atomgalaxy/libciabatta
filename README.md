@@ -23,7 +23,10 @@ Table of Contents <!-- omit in toc -->
   - [Introduction](#introduction)
   - [Using With `bazel`](#using-with-bazel)
   - [Using With `cmake`](#using-with-cmake)
-  - [Tutorial:](#tutorial)
+    - [As an external dependency: `find_package`](#as-an-external-dependency-findpackage)
+      - [Installing under `$PREFIX`:](#installing-under-prefix)
+    - [As a subproject: `add_subdirectory`](#as-a-subproject-addsubdirectory)
+  - [Tutorial](#tutorial)
     - [Includes](#includes)
     - [Ciabatta Mixin Concept Requirements](#ciabatta-mixin-concept-requirements)
     - [Our First Simple Mixin](#our-first-simple-mixin)
@@ -87,7 +90,9 @@ The tags will be updated when/if the repo changes.
 Using With `cmake`
 ------------------
 
-Look at the example in [CMakeLists.txt](test/CMakeLists.txt). This is the obvious way:
+### As an external dependency: `find_package`
+
+If *ciabatta* is installed:
 
 ```cmake
 find_package(ciabatta REQUIRED)
@@ -96,7 +101,39 @@ add_executable(test_example example.cpp)
 target_link_libraries(test_example PUBLIC ciabatta::ciabatta)
 ```
 
-Tutorial:
+If installed under `$PREFIX`: (`$PREFIX` is a unix dir-tree base which
+includes `include/`, `share/` etc.)
+
+```sh
+cd build
+cmake -DCMAKE_PREFIX_PATH=$PREFIX ../
+```
+
+should do the trick.
+
+#### Installing under `$PREFIX`:
+
+Run something akin to the following:
+
+```sh
+mkdir build/  # don't build in the same directory
+cd build
+cmake -DCMAKE_INSTALL_PREFIX=$PREFIX ../ -GNinja
+ninja
+ninja test
+ninja install
+```
+
+### As a subproject: `add_subdirectory`
+
+Check out this repository as a submodule in your `thirdparty/` folder in your
+repo, then add this to your `CMakeLists.txt`:
+
+```cmake
+add_subdirectory(thirdparty/ciabatta)
+```
+
+Tutorial
 --------
 
 ### Includes
