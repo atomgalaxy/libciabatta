@@ -5,3 +5,4 @@ build
 cmake-build
 cmake-install
 cmake-scratch
+.test-output
