@@ -64,6 +64,7 @@ Using With `bazel`
 ------------------
 
 Put this into your `WORKSPACE`:
+
 ```py
 load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 git_repository(
@@ -74,6 +75,7 @@ git_repository(
 ```
 
 For using with a target:
+
 ```py
 cc_binary(
     name = "my_program",
@@ -139,11 +141,13 @@ Tutorial
 ### Includes
 
 Simple include:
+
 ```cpp
 #include "ciabatta/ciabatta.hpp"
 ```
 
-Include the stuff the mixins will need:
+Include the stuff your mixins will need (ciabatta doesn't need any of these):
+
 ```cpp
 #include <iostream>
 #include <utility>
@@ -151,6 +155,7 @@ Include the stuff the mixins will need:
 ```
 
 Make the example easy: (don't do this in headers)
+
 ```cpp
 #define FWD(name) std::forward<decltype(name)>(name)
 ```
@@ -178,11 +183,14 @@ struct minimal_mixin : Base {
 That's it!
 
 **Note:** Before C++20, the constructor needs to be written as
+
 ```cpp
 template <typename...Args>
 minimal_mixin(Args&&...rest) : Base(std::forward<Args>(rest)...) {}
 ```
+
 Because this is so common, *ciabatta* has a macro for you:
+
 ```cpp
 CIABATTA_DEFAULT_MIXIN_CTOR(minimal_mixin, Base);
 ```
@@ -246,12 +254,14 @@ We can now compose several different concrete classes based on this library
 of mixins.
 
 Making an easy concrete class that doesn't need to initialize things:
+
 ```cpp
 struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
 };
 ```
 
 Or maybe something more complicated that does initialize things:
+
 ```cpp
 struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
     concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
@@ -259,6 +269,7 @@ struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoe
 ```
 
 For completeness, the test driver:
+
 ```cpp
 int main() {
     concrete c;
@@ -285,6 +296,7 @@ We multiply-inherit from `Base` and the interface, of course :)
 **Example**
 
 Our interface will be `abstract_socket`:
+
 ```cpp
 struct message { /* payload */
 };
@@ -313,6 +325,7 @@ struct null_receiver : Base {
 ```
 
 Let's make a mixin that adds the vtable and `abstract_socket&` conversion capability:
+
 ```cpp
 template <typename Base>
 struct is_socket : Base, abstract_socket {
@@ -321,12 +334,14 @@ struct is_socket : Base, abstract_socket {
 ```
 
 And now we can make our concrete `null_socket` class:
+
 ```cpp
 struct null_socket
     : ciabatta::mixin<null_socket, null_sender, null_receiver, is_socket> {};
 ```
+
 *Note:* `is_socket` has to be last if you want the ability to mark member
-*functions `final`.
+functions `final`.
 
 If you don't want to define a new class just to inject an abstract interface,
 *ciabatta* has your back:
@@ -356,6 +371,7 @@ struct provides : Base {
 
 To use `provides` as-is, we can just supply the `interface` parameter to
 `curry`, like so:
+
 ```cpp
 struct null_socket3
     : ciabatta::mixin<
