@@ -7,7 +7,7 @@ endif()
 project(
   ciabatta
   LANGUAGES CXX
-  VERSION 3.0.0
+  VERSION 4.0.0
   DESCRIPTION
     "The Sandwich Mixin Pattern Support Library. Header-only, and really small, most composable."
   HOMEPAGE_URL "https://github.com/atomgalaxy/libciabatta")
