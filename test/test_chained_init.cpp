@@ -36,10 +36,7 @@ struct fragment_b : B {
   int w;
 };
 
-struct composite : ciabatta::mixin<composite, fragment_a, fragment_b> {
-  constexpr composite(arg1 a1, arg2 a2, arg3 a3, arg4 a4)
-      : mixin(a1, a2, a3, a4) {}
-};
+using composite = ciabatta::mixin<fragment_a, fragment_b>;
 
 }  // namespace test_chained_init
 

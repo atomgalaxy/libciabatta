@@ -26,22 +26,17 @@ struct is_socket : Base, abstract_socket {
   CIABATTA_DEFAULT_MIXIN_CTOR(is_socket, Base);
 };
 
-struct null_socket
-    : ciabatta::mixin<null_socket, null_sender, null_receiver, is_socket> {};
+using null_socket = ciabatta::mixin<null_sender, null_receiver, is_socket>;
 
-struct null_socket2
-    : ciabatta::mixin<null_socket2,
-                      null_sender,
-                      null_receiver,
-                      ciabatta::mixins::provides<abstract_socket>::mixin> {};
+using null_socket2 = ciabatta::mixin<
+  null_sender,
+  null_receiver,
+  ciabatta::mixins::provides<abstract_socket>::mixin>;
 
-struct null_socket3
-    : ciabatta::mixin<
-          null_socket3,
-          null_sender,
-          null_receiver,
-          ciabatta::curry<ciabatta::mixins::provides, abstract_socket>::mixin> {
-};
+using null_socket3 = ciabatta::mixin<
+  null_sender,
+  null_receiver,
+  ciabatta::curry<ciabatta::mixins::provides, abstract_socket>::mixin>;
 
 int main() {
   null_socket s1;

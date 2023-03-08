@@ -61,16 +61,21 @@ struct chain_inherit<Concrete, H> {
 template <typename Concrete, template <class> class... Mixins>
 using mixin_impl =
     typename chain_inherit<ciabatta_top<Concrete>, Mixins...>::type;
-
-}  // namespace detail
-
+  
 template <typename Concrete, template <class> class... Mixins>
-struct mixin : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
+struct mixin_base : ::ciabatta::detail::mixin_impl<Concrete, Mixins...> {
   template <typename... Rest>
-  constexpr mixin(Rest&&... rest)
+  constexpr mixin_base(Rest&&... rest)
       : ::ciabatta::detail::mixin_impl<Concrete, Mixins...>(
             static_cast<decltype(rest)>(rest)...) {}
+};
+  
+}  // namespace detail
 
+template <template <class> class... Mixins>
+struct mixin : ::ciabatta::detail::mixin_base<mixin<Mixins...>, Mixins...> {
+  using ciabatta::detail::mixin_base<mixin<Mixins...>, Mixins...>::mixin_base;
+  
   mixin() = default;
   mixin(mixin const&) = default;
   mixin(mixin&&) = default;
