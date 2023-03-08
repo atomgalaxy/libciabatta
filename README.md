@@ -256,16 +256,13 @@ of mixins.
 Making an easy concrete class that doesn't need to initialize things:
 
 ```cpp
-struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {
-};
+using concrete = ciabatta::mixin<stdout_logger, frobnicator>;
 ```
 
-Or maybe something more complicated that does initialize things:
+Or maybe something more complicated that needs to initialize things:
 
 ```cpp
-struct concrete2 : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
-    concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
-};
+using concrete2 = ciabatta::mixin<ostream_logger, frobnicator, echoer>;
 ```
 
 For completeness, the test driver:
@@ -275,7 +272,7 @@ int main() {
     concrete c;
     c.frobnicate();
 
-    concrete2 c2{std::cerr};
+    concrete2 c2{std::cerr, "my_prefix"};
     c2.frobnicate();
 }
 ```
@@ -336,8 +333,7 @@ struct is_socket : Base, abstract_socket {
 And now we can make our concrete `null_socket` class:
 
 ```cpp
-struct null_socket
-    : ciabatta::mixin<null_socket, null_sender, null_receiver, is_socket> {};
+using null_socket = ciabatta::mixin<null_sender, null_receiver, is_socket>;
 ```
 
 *Note:* `is_socket` has to be last if you want the ability to mark member
@@ -347,11 +343,10 @@ If you don't want to define a new class just to inject an abstract interface,
 *ciabatta* has your back:
 
 ```cpp
-struct null_socket2
-    : ciabatta::mixin<null_socket2,
-                      null_sender,
-                      null_receiver,
-                      ciabatta::mixins::provides<abstract_socket>::mixin> {};
+using null_socket2 = ciabatta::mixin<
+  null_sender,
+  null_receiver,
+  ciabatta::mixins::provides<abstract_socket>::mixin>;
 ```
 
 ### Templated Mixins
@@ -373,13 +368,10 @@ To use `provides` as-is, we can just supply the `interface` parameter to
 `curry`, like so:
 
 ```cpp
-struct null_socket3
-    : ciabatta::mixin<
-          null_socket3,
-          null_sender,
-          null_receiver,
-          ciabatta::curry<provides, abstract_socket>::mixin> {
-};
+using null_socket3 = ciabatta::mixin<
+  null_sender,
+  null_receiver,
+  ciabatta::curry<ciabatta::mixins::provides, abstract_socket>::mixin>;
 ```
 
 In fact, this is what `ciabatta::mixins::provides` does with its `mixin`

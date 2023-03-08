@@ -41,16 +41,15 @@ struct frobnicator : Base {
 
   void frobnicate() const { this->self().log("frobnicate."); }
 };
-struct concrete : ciabatta::mixin<concrete, stdout_logger, frobnicator> {};
-struct concrete2
-    : ciabatta::mixin<concrete2, ostream_logger, frobnicator, echoer> {
-  concrete2(std::ostream& out_) : mixin(out_, "my prefix") {}
-};
+
+using concrete = ciabatta::mixin<stdout_logger, frobnicator>;
+
+using concrete2 = ciabatta::mixin<ostream_logger, frobnicator, echoer>;
 
 int main() {
   concrete c;
   c.frobnicate();
 
-  concrete2 c2{std::cerr};
+  concrete2 c2{std::cerr, "my_prefix"};
   c2.frobnicate();
 }
